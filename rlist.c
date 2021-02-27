@@ -46,11 +46,11 @@ static int dispatch_move(RedisModuleCtx* ctx, RedisModuleString** argv, int argc
 	size_t len;
 	RedisModuleCallReply* reply = NULL;
 
-	if (strncasecmp(RedisModule_StringPtrLen(argv[0], &len), "RL.LPOP", 8) == 0 && argc == 2) {
+	if (strncasecmp(RedisModule_StringPtrLen(argv[0], &len), "RL.LPOP", 7) == 0 && argc == 2) {
 		reply = RedisModule_Call(ctx, "LPOP", "s", argv[1]);
-	} else if (strncasecmp(RedisModule_StringPtrLen(argv[0], &len), "RL.RPOP", 8) == 0 && argc == 2) {
+	} else if (strncasecmp(RedisModule_StringPtrLen(argv[0], &len), "RL.RPOP", 7) == 0 && argc == 2) {
 		reply = RedisModule_Call(ctx, "RPOP", "s", argv[1]);
-	} else if (strncasecmp(RedisModule_StringPtrLen(argv[0], &len), "RL.RPOPLPUSH", 13) == 0 && argc == 3) {
+	} else if (strncasecmp(RedisModule_StringPtrLen(argv[0], &len), "RL.RPOPLPUSH", 12) == 0 && argc == 3) {
 		reply = RedisModule_Call(ctx, "RPOPLPUSH", "ss", argv[1], argv[2]);
 	} else {
 		return RedisModule_ReplyWithError(ctx, "ERR: invalid command and/or args");
