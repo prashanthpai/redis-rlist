@@ -45,3 +45,13 @@ RL.RPOPLPUSH source destination
 * LMOVE (redis >= 6.2.0).
 * Blocking versions (BLPOP, BRPOP, BRPOPLPUSH, BLMOVE) depending on whether it's worth it (timers etc).
 * Rewrite in rust (for learning rust).
+
+## Redis module development reference
+
+Just some bookmarks for development.
+
+* [Redis Modules: an introduction to the API](https://redis.io/topics/modules-intro)
+* [Modules API reference](https://redis.io/topics/modules-api-ref)
+* [Native types in Redis modules](https://redis.io/topics/modules-native-types)
+* [Blocking commands in Redis modules](https://redis.io/topics/modules-blocking-ops)
+* [RedisModulesSDK](https://github.com/RedisLabs/RedisModulesSDK)
