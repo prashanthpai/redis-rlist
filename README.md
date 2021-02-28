@@ -1,7 +1,10 @@
 # redis-rlist
 
-A Redis module that adds rate limiting over Redis lists. Currently, rate limit
-is applied only on the list from which items are popped.
+A Redis module that allows applying rate limiting to Redis lists. Rate limits
+can be applied for both pops from a list and pushes to the list.
+
+This was a quick weekend project that served as learning tool to build redis
+modules.
 
 ## Install
 
@@ -17,8 +20,11 @@ $ redis-server --loadmodule ~/path/to/rlist.so
 
 ```
 RL.SETPOPINTERVAL key interval [key interval ...]
+RL.SETPUSHINTERVAL key interval [key interval ...]
 RL.LPOP key
 RL.RPOP key
+RL.LPUSH key element
+RL.RPUSH key element
 RL.RPOPLPUSH source destination
 ```
 
@@ -41,7 +47,7 @@ RL.RPOPLPUSH source destination
 
 ## TODO
 
-* Support applying ratelimit to destination list.
+* LPOPRPUSH
 * LMOVE (redis >= 6.2.0).
 * Blocking versions (BLPOP, BRPOP, BRPOPLPUSH, BLMOVE) depending on whether it's worth it (timers etc).
 * Rewrite in rust (for learning rust).
