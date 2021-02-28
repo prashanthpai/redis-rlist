@@ -52,6 +52,33 @@ int RLSetRL_RedisCommand(RedisModuleCtx* ctx, RedisModuleString** argv, int argc
 	return RedisModule_ReplyWithLongLong(ctx, count);
 }
 
+int RL_LPopRPushCommand(RedisModuleCtx* ctx, RedisModuleString** argv, int argc) {
+	RedisModule_AutoMemory(ctx);
+
+	if (argc != 3)
+		return RedisModule_WrongArity(ctx);
+
+	RedisModuleKey* src_key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
+	RedisModuleKey* dst_key = RedisModule_OpenKey(ctx, argv[2], REDISMODULE_READ | REDISMODULE_WRITE);
+
+	int src_type = RedisModule_KeyType(src_key);
+	int dst_type = RedisModule_KeyType(dst_key);
+
+	if ((src_type != REDISMODULE_KEYTYPE_LIST && src_type != REDISMODULE_KEYTYPE_EMPTY) ||
+	    (dst_type != REDISMODULE_KEYTYPE_LIST && dst_type != REDISMODULE_KEYTYPE_EMPTY)) {
+		RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+		return REDISMODULE_ERR;
+	}
+
+	RedisModuleString* val = RedisModule_ListPop(src_key, REDISMODULE_LIST_HEAD);
+	if (val == NULL)
+		return RedisModule_ReplyWithNull(ctx);
+
+	RedisModule_ListPush(dst_key, REDISMODULE_LIST_TAIL, val);
+
+	return RedisModule_ReplyWithString(ctx, val);
+}
+
 static int dispatch_move(RedisModuleCtx* ctx, RedisModuleString** argv, int argc) {
 	size_t len;
 	RedisModuleCallReply* reply = NULL;
@@ -66,6 +93,8 @@ static int dispatch_move(RedisModuleCtx* ctx, RedisModuleString** argv, int argc
 		reply = RedisModule_Call(ctx, "RPUSH", "ss", argv[1], argv[2]);
 	} else if (strncasecmp(RedisModule_StringPtrLen(argv[0], &len), "RL.RPOPLPUSH", 12) == 0 && argc == 3) {
 		reply = RedisModule_Call(ctx, "RPOPLPUSH", "ss", argv[1], argv[2]);
+	} else if (strncasecmp(RedisModule_StringPtrLen(argv[0], &len), "RL.LPOPRPUSH", 12) == 0 && argc == 3) {
+		return RL_LPopRPushCommand(ctx, argv, argc);
 	} else {
 		return RedisModule_ReplyWithError(ctx, "ERR: invalid command and/or args");
 	}
@@ -122,9 +151,8 @@ static long long get_long_long_from_hash(RedisModuleCtx* ctx, RedisModuleString*
 int RL_PopOrPush_RedisCommand(RedisModuleCtx* ctx, RedisModuleString** argv, int argc) {
 	RedisModule_AutoMemory(ctx);
 
-	if (argc != 2 && argc != 3) {
+	if (argc != 2 && argc != 3)
 		return RedisModule_WrongArity(ctx);
-	}
 
 	size_t len;
 	RedisModuleString* intervals_key = NULL;
@@ -165,15 +193,14 @@ int RL_PopOrPush_RedisCommand(RedisModuleCtx* ctx, RedisModuleString** argv, int
 		return dispatch_move(ctx, argv, argc);
 	}
 
-	return RedisModule_ReplyWithNullArray(ctx);
+	return RedisModule_ReplyWithNull(ctx);
 }
 
 int RL_PopAndPush_RedisCommand(RedisModuleCtx* ctx, RedisModuleString** argv, int argc) {
 	RedisModule_AutoMemory(ctx);
 
-	if (argc != 3) {
+	if (argc != 3)
 		return RedisModule_WrongArity(ctx);
-	}
 
 	long long pop_interval = get_long_long_from_hash(ctx, pop_intervals_key, argv[1]);
 	if (pop_interval < 0)
@@ -207,7 +234,7 @@ int RL_PopAndPush_RedisCommand(RedisModuleCtx* ctx, RedisModuleString** argv, in
 		return dispatch_move(ctx, argv, argc);
 	}
 
-	return RedisModule_ReplyWithNullArray(ctx);
+	return RedisModule_ReplyWithNull(ctx);
 }
 
 int RedisModule_OnLoad(RedisModuleCtx* ctx, RedisModuleString** argv, int argc) {
@@ -242,6 +269,10 @@ int RedisModule_OnLoad(RedisModuleCtx* ctx, RedisModuleString** argv, int argc) 
 		return REDISMODULE_ERR;
 
 	if (RedisModule_CreateCommand(ctx, "RL.RPOPLPUSH", RL_PopAndPush_RedisCommand, "write fast deny-oom", 1, 2,
+				      1) == REDISMODULE_ERR)
+		return REDISMODULE_ERR;
+
+	if (RedisModule_CreateCommand(ctx, "RL.LPOPRPUSH", RL_PopAndPush_RedisCommand, "write fast deny-oom", 1, 2,
 				      1) == REDISMODULE_ERR)
 		return REDISMODULE_ERR;
 
